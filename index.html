@@ -1,0 +1,58 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Планировщик встреч с друзьями</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Планировщик встреч с друзьями</h1>
+            <p>Организуй встречи и выбирай удобное время вместе с друзьями!</p>
+        </header>
+
+        <main>
+            <section class="create-meeting">
+                <h2>Создать новую встречу</h2>
+
+                <form id="meetingForm">
+                    <label for="meetingName">Название встречи</label>
+                    <input
+                        type="text"
+                        id="meetingName"
+                        placeholder="Например, встреча с друзьями"
+                        required
+                    >
+
+                    <label for="meetingDescription">Описание</label>
+                    <textarea
+                        id="meetingDescription"
+                        placeholder="Что будем делать?"
+                    ></textarea>
+
+                    <label for="meetingPlace">Место встречи</label>
+                    <input
+                        type="text"
+                        id="meetingPlace"
+                        placeholder="Например, кафе в центре"
+                    >
+
+                    <button type="submit">Создать встречу</button>
+                </form>
+            </section>
+
+            <section class="meeting-list">
+                <h2>Мои встречи</h2>
+                <div id="meetingsContainer">
+                    <p>Пока встреч нет. Создай первую!</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
