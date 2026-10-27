@@ -17,6 +17,48 @@ function saveMeetings() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(meetings));
 }
 
+function addParticipant(meetingId) {
+    const meeting = meetings.find(item => item.id === meetingId);
+    if (!meeting) return;
+
+    const input = document.getElementById(`participant-${meetingId}`);
+    const name = input.value.trim();
+
+    if (!name) {
+        alert('Введите имя участника!');
+        return;
+    }
+
+    if (!Array.isArray(meeting.participants)) {
+        meeting.participants = [];
+    }
+
+    const exists = meeting.participants.some(
+        participant => participant.toLowerCase() === name.toLowerCase()
+    );
+
+    if (exists) {
+        alert('Этот участник уже добавлен!');
+        return;
+    }
+
+    meeting.participants.push(name);
+    saveMeetings();
+    renderMeetings();
+}
+
+function removeParticipant(meetingId, participantName) {
+    const meeting = meetings.find(item => item.id === meetingId);
+    if (!meeting || !Array.isArray(meeting.participants)) return;
+
+    meeting.participants = meeting.participants.filter(
+        participant => participant !== participantName
+    );
+
+    saveMeetings();
+    renderMeetings();
+}
+
 function renderMeetings() {
     container.replaceChildren();
 
@@ -28,6 +70,10 @@ function renderMeetings() {
     }
 
     meetings.forEach(meeting => {
+        if (!Array.isArray(meeting.participants)) {
+            meeting.participants = [];
+        }
+
         const card = document.createElement('article');
         card.className = 'meeting-card';
 
@@ -40,7 +86,52 @@ function renderMeetings() {
         const place = document.createElement('p');
         place.textContent = `Место: ${meeting.place || 'Не указано'}`;
 
-        card.append(title, description, place);
+        const participantsTitle = document.createElement('h4');
+        participantsTitle.textContent = 'Участники встречи';
+
+        const participantList = document.createElement('ul');
+        participantList.className = 'participant-list';
+
+        meeting.participants.forEach(name => {
+            const item = document.createElement('li');
+
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = name;
+
+            const removeButton = document.createElement('button');
+            removeButton.type = 'button';
+            removeButton.textContent = 'Удалить';
+            removeButton.className = 'remove-button';
+            removeButton.addEventListener('click', () => {
+                removeParticipant(meeting.id, name);
+            });
+
+            item.append(nameSpan, removeButton);
+            participantList.appendChild(item);
+        });
+
+        const participantInput = document.createElement('input');
+        participantInput.type = 'text';
+        participantInput.id = `participant-${meeting.id}`;
+        participantInput.placeholder = 'Имя участника';
+
+        const addButton = document.createElement('button');
+        addButton.type = 'button';
+        addButton.textContent = 'Добавить участника';
+        addButton.addEventListener('click', () => {
+            addParticipant(meeting.id);
+        });
+
+        card.append(
+            title,
+            description,
+            place,
+            participantsTitle,
+            participantList,
+            participantInput,
+            addButton
+        );
+
         container.appendChild(card);
     });
 }
