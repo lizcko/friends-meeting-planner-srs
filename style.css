@@ -82,3 +82,46 @@ button:hover {
     margin-top: 0;
 }
 
+
+/* Управление участниками */
+
+.participant-list {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0;
+}
+
+.participant-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: #ffffff;
+    border: 1px solid #dfe3f2;
+    border-radius: 8px;
+}
+
+.participant-list span {
+    overflow-wrap: anywhere;
+}
+
+.remove-button {
+    background: #e75a65;
+    padding: 8px 12px;
+    flex-shrink: 0;
+}
+
+.remove-button:hover {
+    background: #c83e4a;
+}
+
+.meeting-card input {
+    margin: 10px 0;
+}
+
+.meeting-card h4 {
+    margin-bottom: 10px;
+    color: #4757a8;
+}
