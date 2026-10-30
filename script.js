@@ -1,173 +1,461 @@
 
-* {
-  box-sizing: border-box;
+'use strict';
+
+const STORAGE_KEY = 'friendsMeetingPlanner.meetings';
+
+let meetings = [];
+
+try {
+  const saved = JSON.parse(
+    localStorage.getItem(STORAGE_KEY) || '[]'
+  );
+  meetings = Array.isArray(saved) ? saved : [];
+} catch (error) {
+  console.error('Ошибка загрузки встреч:', error);
 }
 
-body {
-  margin: 0;
-  padding: 30px 16px;
-  font: 16px/1.5 Arial, sans-serif;
-  background: #f2f4fa;
-  color: #22283a;
-}
+const form = document.getElementById('meetingForm');
+const container = document.getElementById('meetingsContainer');
 
-.container {
-  max-width: 850px;
-  margin: auto;
-}
-
-header {
-  text-align: center;
-  margin-bottom: 32px;
-}
-
-header h1 {
-  color: #4757a8;
-}
-
-section {
-  padding: 25px;
-  margin-bottom: 24px;
-  background: white;
-  border-radius: 14px;
-  box-shadow: 0 4px 18px #00000010;
-}
-
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-label {
-  font-weight: bold;
-}
-
-input,
-textarea,
-select {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ccd2e0;
-  border-radius: 8px;
-  font: inherit;
-}
-
-textarea {
-  min-height: 90px;
-  resize: vertical;
-}
-
-button {
-  padding: 11px 14px;
-  border: 0;
-  border-radius: 8px;
-  background: #5865bc;
-  color: white;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-button:hover {
-  background: #404e9d;
-}
-
-button:focus-visible,
-input:focus-visible,
-select:focus-visible {
-  outline: 3px solid #99aaff;
-}
-
-.meeting-card {
-  padding: 18px;
-  margin-top: 14px;
-  background: #f6f7fd;
-  border: 1px solid #dfe3f2;
-  border-radius: 10px;
-}
-
-.meeting-card h3 {
-  margin-top: 0;
-}
-
-.participant-list {
-  list-style: none;
-  padding: 0;
-  margin: 15px 0;
-}
-
-.participant-list li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  margin-bottom: 8px;
-  background: white;
-  border: 1px solid #dfe3f2;
-  border-radius: 8px;
-}
-
-.participant-list span {
-  overflow-wrap: anywhere;
-}
-
-.remove-button {
-  background: #c13d53;
-  flex-shrink: 0;
-}
-
-.remove-button:hover {
-  background: #9c293d;
-}
-
-.participant-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.participant-actions input {
-  flex: 1;
-  min-width: 0;
-  width: auto;
-}
-
-select {
-  margin: 8px 0 12px;
-  background: white;
-}
-
-.vote-list {
-  display: grid;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.vote-option {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  padding: 10px;
-  background: white;
-  border: 1px solid #dfe3f2;
-  border-radius: 8px;
-}
-
-.vote-option input {
-  width: auto;
-}
-
-.vote-leader {
-  border-color: #5865bc;
-  background: #eef0ff;
-}
-
-@media (max-width: 540px) {
-  .participant-actions {
-    flex-direction: column;
-  }
-
-  section {
-    padding: 16px;
+function saveMeetings() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(meetings));
+    return true;
+  } catch (error) {
+    console.error('Ошибка сохранения:', error);
+    alert('Не удалось сохранить изменения.');
+    return false;
   }
 }
+
+function make(tag, text, className) {
+  const element = document.createElement(tag);
+
+  if (text !== undefined) {
+    element.textContent = text;
+  }
+
+  if (className) {
+    element.className = className;
+  }
+
+  return element;
+}
+
+function normalizeMeeting(meeting) {
+  if (!Array.isArray(meeting.participants)) {
+    meeting.participants = [];
+  }
+
+  if (!Array.isArray(meeting.dateOptions)) {
+    meeting.dateOptions = [];
+  }
+
+  if (
+    !meeting.votes ||
+    typeof meeting.votes !== 'object' ||
+    Array.isArray(meeting.votes)
+  ) {
+    meeting.votes = {};
+  }
+
+  return meeting;
+}
+
+// Добавление участника
+function addParticipant(meetingId, name) {
+  const meeting = meetings.find(item => item.id === meetingId);
+  if (!meeting) return;
+
+  normalizeMeeting(meeting);
+
+  const cleanName = name.trim();
+
+  if (!cleanName) {
+    alert('Введите имя участника.');
+    return;
+  }
+
+  const duplicate = meeting.participants.some(
+    participant =>
+      participant.toLocaleLowerCase('ru') ===
+      cleanName.toLocaleLowerCase('ru')
+  );
+
+  if (duplicate) {
+    alert('Этот участник уже добавлен.');
+    return;
+  }
+
+  meeting.participants.push(cleanName);
+  saveMeetings();
+  renderMeetings();
+}
+
+// Удаление участника
+function removeParticipant(meetingId, name) {
+  const meeting = meetings.find(item => item.id === meetingId);
+  if (!meeting) return;
+
+  normalizeMeeting(meeting);
+
+  meeting.participants = meeting.participants.filter(
+    participant => participant !== name
+  );
+
+  // Удаляем также голоса удалённого участника
+  delete meeting.votes[name];
+
+  saveMeetings();
+  renderMeetings();
+}
+
+// Добавление варианта даты и времени
+function addDateOption(meetingId, value) {
+  const meeting = meetings.find(item => item.id === meetingId);
+  if (!meeting) return;
+
+  normalizeMeeting(meeting);
+
+  if (!value || !Number.isFinite(new Date(value).getTime())) {
+    alert('Выберите корректную дату и время.');
+    return;
+  }
+
+  const duplicate = meeting.dateOptions.some(
+    option => option.value === value
+  );
+
+  if (duplicate) {
+    alert('Такой вариант уже существует.');
+    return;
+  }
+
+  meeting.dateOptions.push({
+    id: crypto.randomUUID(),
+    value
+  });
+
+  saveMeetings();
+  renderMeetings();
+}
+
+// Подсчёт количества голосов
+function countVotes(meeting, optionId) {
+  return meeting.participants.filter(participant => {
+    const selected = meeting.votes[participant];
+
+    return Array.isArray(selected) &&
+      selected.includes(optionId);
+  }).length;
+}
+
+// Сохранение голоса участника
+function saveVote(meetingId, participant, selectedIds) {
+  const meeting = meetings.find(item => item.id === meetingId);
+  if (!meeting) return;
+
+  normalizeMeeting(meeting);
+
+  if (!meeting.participants.includes(participant)) {
+    alert('Сначала выберите участника.');
+    return;
+  }
+
+  const validIds = new Set(
+    meeting.dateOptions.map(option => option.id)
+  );
+
+  meeting.votes[participant] = [
+    ...new Set(selectedIds.filter(id => validIds.has(id)))
+  ];
+
+  if (saveMeetings()) {
+    alert('Голос успешно сохранён!');
+  }
+
+  renderMeetings();
+}
+
+// Форматирование даты
+function formatDate(value) {
+  return new Date(value).toLocaleString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+// Отображение встреч
+function renderMeetings() {
+  container.replaceChildren();
+
+  if (meetings.length === 0) {
+    container.append(
+      make('p', 'Пока встреч нет. Создай первую!')
+    );
+    return;
+  }
+
+  for (const meeting of meetings) {
+    normalizeMeeting(meeting);
+
+    const card = make('article', undefined, 'meeting-card');
+
+    // Основная информация
+    card.append(
+      make('h3', meeting.name),
+      make('p', meeting.description || 'Без описания'),
+      make('p', `Место: ${meeting.place || 'Не указано'}`)
+    );
+
+    // Раздел участников
+    card.append(make('h4', 'Участники встречи'));
+
+    const participantList = make(
+      'ul',
+      undefined,
+      'participant-list'
+    );
+
+    for (const name of meeting.participants) {
+      const item = make('li');
+
+      const removeButton = make(
+        'button',
+        'Удалить',
+        'remove-button'
+      );
+
+      removeButton.type = 'button';
+
+      removeButton.addEventListener('click', () => {
+        removeParticipant(meeting.id, name);
+      });
+
+      item.append(make('span', name), removeButton);
+      participantList.append(item);
+    }
+
+    card.append(participantList);
+
+    const participantRow = make(
+      'div',
+      undefined,
+      'participant-actions'
+    );
+
+    const participantInput = make('input');
+    participantInput.type = 'text';
+    participantInput.placeholder = 'Имя участника';
+    participantInput.setAttribute(
+      'aria-label',
+      'Имя нового участника'
+    );
+
+    const addParticipantButton = make(
+      'button',
+      'Добавить участника'
+    );
+
+    addParticipantButton.type = 'button';
+
+    addParticipantButton.addEventListener('click', () => {
+      addParticipant(meeting.id, participantInput.value);
+    });
+
+    participantRow.append(
+      participantInput,
+      addParticipantButton
+    );
+
+    card.append(participantRow);
+
+    // Раздел вариантов даты и времени
+    card.append(make('h4', 'Варианты даты и времени'));
+
+    const dateRow = make(
+      'div',
+      undefined,
+      'participant-actions'
+    );
+
+    const dateInput = make('input');
+    dateInput.type = 'datetime-local';
+    dateInput.setAttribute(
+      'aria-label',
+      'Предлагаемая дата и время'
+    );
+
+    const addDateButton = make(
+      'button',
+      'Предложить дату'
+    );
+
+    addDateButton.type = 'button';
+
+    addDateButton.addEventListener('click', () => {
+      addDateOption(meeting.id, dateInput.value);
+    });
+
+    dateRow.append(dateInput, addDateButton);
+    card.append(dateRow);
+
+    // Выбор участника
+    card.append(make('h4', 'Голосование'));
+
+    const personLabel = make(
+      'label',
+      'Кто голосует?'
+    );
+
+    const personSelect = make('select');
+
+    personSelect.append(
+      new Option('Выберите участника', '')
+    );
+
+    for (const name of meeting.participants) {
+      personSelect.append(new Option(name, name));
+    }
+
+    card.append(personLabel, personSelect);
+
+    const voteList = make(
+      'div',
+      undefined,
+      'vote-list'
+    );
+
+    card.append(voteList);
+
+    const saveVoteButton = make(
+      'button',
+      'Сохранить голос'
+    );
+
+    saveVoteButton.type = 'button';
+    saveVoteButton.disabled = true;
+
+    card.append(saveVoteButton);
+
+    // Отображение вариантов и результатов
+    function showVoting() {
+      voteList.replaceChildren();
+
+      const selectedParticipant = personSelect.value;
+
+      saveVoteButton.disabled =
+        !selectedParticipant ||
+        meeting.dateOptions.length === 0;
+
+      if (meeting.dateOptions.length === 0) {
+        voteList.append(
+          make('p', 'Варианты даты ещё не предложены.')
+        );
+        return;
+      }
+
+      const counts = meeting.dateOptions.map(
+        option => countVotes(meeting, option.id)
+      );
+
+      const maximum = Math.max(...counts);
+
+      const participantVotes = Array.isArray(
+        meeting.votes[selectedParticipant]
+      )
+        ? meeting.votes[selectedParticipant]
+        : [];
+
+      meeting.dateOptions.forEach((option, index) => {
+        const row = make(
+          'label',
+          undefined,
+          'vote-option'
+        );
+
+        if (maximum > 0 && counts[index] === maximum) {
+          row.classList.add('vote-leader');
+        }
+
+        const checkbox = make('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = option.id;
+        checkbox.disabled = !selectedParticipant;
+
+        checkbox.checked = participantVotes.includes(
+          option.id
+        );
+
+        const caption = make(
+          'span',
+          `${formatDate(option.value)} — голосов: ${counts[index]}`
+        );
+
+        row.append(checkbox, caption);
+        voteList.append(row);
+      });
+    }
+
+    personSelect.addEventListener('change', showVoting);
+
+    saveVoteButton.addEventListener('click', () => {
+      const selectedIds = [
+        ...voteList.querySelectorAll(
+          'input[type="checkbox"]:checked'
+        )
+      ].map(checkbox => checkbox.value);
+
+      saveVote(
+        meeting.id,
+        personSelect.value,
+        selectedIds
+      );
+    });
+
+    showVoting();
+
+    container.append(card);
+  }
+}
+
+// Создание новой встречи
+form.addEventListener('submit', event => {
+  event.preventDefault();
+
+  const name = document
+    .getElementById('meetingName')
+    .value.trim();
+
+  const description = document
+    .getElementById('meetingDescription')
+    .value.trim();
+
+  const place = document
+    .getElementById('meetingPlace')
+    .value.trim();
+
+  if (!name) {
+    alert('Укажите название встречи!');
+    return;
+  }
+
+  meetings.push({
+    id: crypto.randomUUID(),
+    name,
+    description,
+    place,
+    participants: [],
+    dateOptions: [],
+    votes: {}
+  });
+
+  saveMeetings();
+  renderMeetings();
+  form.reset();
+});
+
+renderMeetings();
