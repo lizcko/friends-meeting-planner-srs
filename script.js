@@ -1,66 +1,173 @@
-const STORAGE_KEY = 'friendsMeetingPlanner.meetings';
-let meetings = [];
-try {
-  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-  meetings = Array.isArray(saved) ? saved : [];
-} catch (error) { console.error('Ошибка загрузки встреч:', error); }
-const form = document.getElementById('meetingForm');
-const container = document.getElementById('meetingsContainer');
-function saveMeetings() { localStorage.setItem(STORAGE_KEY, JSON.stringify(meetings)); }
-function make(tag, text, className) {
-  const el = document.createElement(tag);
-  if (text !== undefined) el.textContent = text;
-  if (className) el.className = className;
-  return el;
+
+* {
+  box-sizing: border-box;
 }
-function addParticipant(meetingId, name) {
-  const m = meetings.find(m => m.id === meetingId);
-  if (!m) return;
-  name = name.trim();
-  if (!name) return alert('Введите имя участника');
-  if (m.participants.some(n => n.toLocaleLowerCase('ru') === name.toLocaleLowerCase('ru'))) return alert('Участник уже добавлен');
-  m.participants.push(name);
-  saveMeetings(); renderMeetings();
+
+body {
+  margin: 0;
+  padding: 30px 16px;
+  font: 16px/1.5 Arial, sans-serif;
+  background: #f2f4fa;
+  color: #22283a;
 }
-function removeParticipant(meetingId, name) {
-  const m = meetings.find(m => m.id === meetingId);
-  if (!m) return;
-  m.participants = m.participants.filter(n => n !== name);
-  saveMeetings(); renderMeetings();
+
+.container {
+  max-width: 850px;
+  margin: auto;
 }
-function renderMeetings() {
-  container.replaceChildren();
-  if (!meetings.length) { container.append(make('p','Пока встреч нет. Создай первую!')); return; }
-  for (const m of meetings) {
-    if (!Array.isArray(m.participants)) m.participants = [];
-    if (!Array.isArray(m.dateOptions)) m.dateOptions = [];
-    if (!m.votes || typeof m.votes !== 'object') m.votes = {};
-    const card=make('article', undefined, 'meeting-card');
-    card.append(make('h3',m.name),make('p',m.description || 'Без описания'),make('p',`Место: ${m.place || 'Не указано'}`));
-    card.append(make('h4','Участники встречи'));
-    const list=make('ul',undefined,'participant-list');
-    for (const name of m.participants) {
-      const li=make('li');
-      const btn=make('button','Удалить','remove-button'); btn.type='button';
-      btn.addEventListener('click',()=>removeParticipant(m.id,name));
-      li.append(make('span',name),btn); list.append(li);
-    }
-    card.append(list);
-    const row=make('div',undefined,'participant-actions');
-    const input=make('input'); input.type='text'; input.placeholder='Имя участника'; input.setAttribute('aria-label','Имя участника');
-    const add=make('button','Добавить участника'); add.type='button';
-    add.addEventListener('click',()=>addParticipant(m.id,input.value));
-    row.append(input,add); card.append(row);
-    container.append(card);
+
+header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+header h1 {
+  color: #4757a8;
+}
+
+section {
+  padding: 25px;
+  margin-bottom: 24px;
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 4px 18px #00000010;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+label {
+  font-weight: bold;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccd2e0;
+  border-radius: 8px;
+  font: inherit;
+}
+
+textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+button {
+  padding: 11px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: #5865bc;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+button:hover {
+  background: #404e9d;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid #99aaff;
+}
+
+.meeting-card {
+  padding: 18px;
+  margin-top: 14px;
+  background: #f6f7fd;
+  border: 1px solid #dfe3f2;
+  border-radius: 10px;
+}
+
+.meeting-card h3 {
+  margin-top: 0;
+}
+
+.participant-list {
+  list-style: none;
+  padding: 0;
+  margin: 15px 0;
+}
+
+.participant-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: white;
+  border: 1px solid #dfe3f2;
+  border-radius: 8px;
+}
+
+.participant-list span {
+  overflow-wrap: anywhere;
+}
+
+.remove-button {
+  background: #c13d53;
+  flex-shrink: 0;
+}
+
+.remove-button:hover {
+  background: #9c293d;
+}
+
+.participant-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.participant-actions input {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+
+select {
+  margin: 8px 0 12px;
+  background: white;
+}
+
+.vote-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.vote-option {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  background: white;
+  border: 1px solid #dfe3f2;
+  border-radius: 8px;
+}
+
+.vote-option input {
+  width: auto;
+}
+
+.vote-leader {
+  border-color: #5865bc;
+  background: #eef0ff;
+}
+
+@media (max-width: 540px) {
+  .participant-actions {
+    flex-direction: column;
+  }
+
+  section {
+    padding: 16px;
   }
 }
-form.addEventListener('submit', event => {
-  event.preventDefault();
-  const name=document.getElementById('meetingName').value.trim();
-  const description=document.getElementById('meetingDescription').value.trim();
-  const place=document.getElementById('meetingPlace').value.trim();
-  if (!name) return alert('Укажите название встречи!');
-  meetings.push({id:crypto.randomUUID(),name,description,place,participants:[],dateOptions:[],votes:{}});
-  saveMeetings();renderMeetings();form.reset();
-});
-renderMeetings();
