@@ -1,0 +1,56 @@
+
+name: CI - Проверка качества кода
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Проверка приложения
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Загрузка репозитория
+        uses: actions/checkout@v4
+
+      - name: Установка Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Проверка наличия файлов
+        run: |
+          test -s index.html
+          test -s style.css
+          test -s script.js
+          test -s README.md
+
+      - name: Проверка синтаксиса JavaScript
+        run: node --check script.js
+
+      - name: Проверка основных функций
+        run: |
+          node -e "
+          const fs = require('fs');
+          const code = fs.readFileSync('script.js', 'utf8');
+          const functions = [
+            'addParticipant',
+            'removeParticipant',
+            'addDateOption',
+            'saveVote',
+            'countVotes',
+            'renderMeetings'
+          ];
+          for (const name of functions) {
+            if (!code.includes('function ' + name + '(')) {
+              throw new Error('Отсутствует функция: ' + name);
+            }
+          }
+          console.log('Основные функции найдены');
+          "
