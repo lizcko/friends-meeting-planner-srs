@@ -14,12 +14,14 @@ VALUES
 
 -- 2. Встречи
 INSERT INTO Meetings
-    (meeting_id, title, description, created_by)
+    (meeting_id, title, description, location, created_by)
 VALUES
     (1, 'Поход в кино',
-     'Совместный просмотр фильма', 1),
+     'Совместный просмотр фильма',
+     'Кинотеатр', 1),
     (2, 'Встреча в кафе',
-     'Встреча друзей в выходные', 2);
+     'Встреча друзей в выходные',
+     'Кафе в центре города', 2);
 
 -- 3. Участники встреч
 INSERT INTO Participants
@@ -33,12 +35,12 @@ VALUES
 
 -- 4. Варианты даты и времени
 INSERT INTO DateOptions
-    (option_id, meeting_id, proposed_datetime)
+    (option_id, meeting_id, proposed_datetime, is_final)
 VALUES
-    (1, 1, '2026-11-14 18:00'),
-    (2, 1, '2026-11-15 17:00'),
-    (3, 2, '2026-11-21 15:00'),
-    (4, 2, '2026-11-22 16:00');
+    (1, 1, '2026-11-14 18:00', 1),
+    (2, 1, '2026-11-15 17:00', 0),
+    (3, 2, '2026-11-21 15:00', 1),
+    (4, 2, '2026-11-22 16:00', 0);
 
 -- 5. Голоса участников
 INSERT INTO Votes
