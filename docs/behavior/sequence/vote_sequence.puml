@@ -1,0 +1,27 @@
+@startuml
+title Голосование за дату
+actor Участник as U
+participant "Интерфейс" as UI
+participant "script.js" as JS
+database localStorage as DB
+U -> UI: Выбрать участника и даты
+UI -> JS: saveVote(meetingId, participant, selectedIds)
+activate JS
+alt Участник не входит во встречу
+ JS --> U: Сначала выберите участника
+else Участник найден
+ JS -> JS: Отфильтровать ID дат, убрать дубликаты
+ JS -> JS: Заменить votes[participant]
+ JS -> DB: setItem(meetings)
+ alt Успех
+ DB --> JS: OK
+ JS --> U: Голос успешно сохранён
+ else Ошибка
+ DB --> JS: Исключение
+ JS --> U: Не удалось сохранить изменения
+ end
+ JS -> UI: renderMeetings(), countVotes()
+ UI --> U: Обновлённые результаты
+end
+deactivate JS
+@enduml
