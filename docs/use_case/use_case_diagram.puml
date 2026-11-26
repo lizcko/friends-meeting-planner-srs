@@ -1,0 +1,41 @@
+@startuml
+left to right direction
+actor "Организатор" as O
+actor "Участник" as P
+rectangle "Планировщик встреч с друзьями" {
+usecase "Создать встречу" as C
+usecase "Просмотреть встречи" as L
+usecase "Добавить участника" as A
+usecase "Удалить участника" as R
+usecase "Предложить дату" as D
+usecase "Проголосовать / изменить голос" as V
+usecase "Просмотреть результаты" as T
+usecase "Подтвердить итоговую дату" as F
+usecase "Проверить данные" as X
+usecase "Сохранить изменения" as S
+}
+O -- C
+O -- L
+O -- A
+O -- R
+O -- D
+O -- F
+P -- L
+P -- V
+P -- T
+C ..> X : <<include>>
+A ..> X : <<include>>
+D ..> X : <<include>>
+V ..> X : <<include>>
+C ..> S : <<include>>
+A ..> S : <<include>>
+R ..> S : <<include>>
+D ..> S : <<include>>
+V ..> S : <<include>>
+F ..> S : <<include>>
+F ..> T : <<include>>
+T ..> L : <<extend>>
+note bottom of F
+Целевая функция, предусмотренная моделью ЛР4
+end note
+@enduml
