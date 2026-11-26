@@ -1,0 +1,27 @@
+@startuml
+title Создание встречи
+actor Организатор as U
+participant "Интерфейс" as UI
+participant "script.js" as JS
+database localStorage as DB
+U -> UI: Название, описание, место
+UI -> JS: submit
+activate JS
+JS -> JS: trim(), проверка названия
+alt Название пустое
+ JS --> UI: Ошибка валидации
+ UI --> U: Укажите название
+else Данные корректны
+ JS -> JS: Создать объект встречи и UUID
+ JS -> DB: setItem(JSON.stringify(meetings))
+ alt Сохранение успешно
+ DB --> JS: OK
+ else Ошибка хранения
+ DB --> JS: Исключение
+ JS --> U: Не удалось сохранить изменения
+ end
+ JS -> UI: renderMeetings(), reset()
+ UI --> U: Карточка встречи
+end
+deactivate JS
+@enduml

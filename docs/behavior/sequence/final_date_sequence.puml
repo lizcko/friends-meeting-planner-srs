@@ -1,0 +1,30 @@
+@startuml
+title Подтверждение итоговой даты (целевая модель)
+actor Организатор as U
+participant Интерфейс as UI
+participant "Сервис встреч (проект)" as S
+database SQLite as DB
+U -> UI: Просмотреть результаты и выбрать дату
+UI -> S: confirmDate(meetingId, optionId)
+activate S
+S -> DB: Проверить принадлежность даты встрече
+DB --> S: Результат
+alt Дата отсутствует или чужая
+ S --> UI: Ошибка выбора
+ UI --> U: Выберите дату этой встречи
+else Дата принадлежит встрече
+ S -> DB: BEGIN; сбросить is_final для встречи
+ S -> DB: Установить is_final=1 выбранной даты
+ alt Успех
+ DB --> S: OK
+ S -> DB: COMMIT
+ S --> UI: Итоговая дата
+ UI --> U: Подтверждение
+ else Ошибка записи
+ DB --> S: Ошибка
+ S -> DB: ROLLBACK
+ S --> UI: Ошибка сохранения
+ end
+end
+deactivate S
+@enduml
