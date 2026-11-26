@@ -1,0 +1,28 @@
+name: Lab 5 UML diagrams
+on:
+  push:
+    branches: [lab5-behavior-modeling]
+    paths:
+      - 'docs/**/*.puml'
+      - '.github/workflows/lab5-diagrams.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y plantuml graphviz fonts-dejavu
+      - run: |
+          plantuml -charset UTF-8 -failfast2 -tpng docs/use_case/*.puml docs/behavior/sequence/*.puml
+          plantuml -charset UTF-8 -failfast2 -tsvg docs/use_case/*.puml docs/behavior/sequence/*.puml
+          test "$(find docs/use_case docs/behavior/sequence -name '*.png' | wc -l)" -ge 5
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/use_case docs/behavior/sequence
+          if ! git diff --cached --quiet; then
+            git commit -m "docs(lab5): render PNG and SVG diagrams"
+            git push
+          fi
